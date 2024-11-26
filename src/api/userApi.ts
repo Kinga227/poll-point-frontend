@@ -2,7 +2,7 @@ import axios from 'axios';
 import { UserInput } from '../types/UserTypes.ts';
 
 const userApi = axios.create({
-  baseURL: 'http://localhost:3000',
+  baseURL: 'http://localhost:8080',
   headers: {
     Accept: 'application/json',
   },

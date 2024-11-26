@@ -1,8 +1,10 @@
 import React from "react";
 import Box from "@mui/material/Box";
 import AppBarComponent from "./AppBarComponent";
-import SidebarMenu from "./SidebarMenu";
+import SidebarMenu from "./SideBarMenu";
 import QuestionCard from "./QuestionCard";
+import Fab from "@mui/material/Fab";
+import AddIcon from "@mui/icons-material/Add";
 
 const MainPage = () => {
   const questions = [
@@ -11,7 +13,7 @@ const MainPage = () => {
     "Aliquam sit amet ipsum euismod lacinia?",
     "Vestibulum euismod nisl eu eros vehicula, at condimentum mi tincidunt?",
     "Etiam gravida libero ac elit tristique, et dictum arcu euismod?",
-    "Praesent viverra felis sed leo tincidunt gravida?"
+    "Praesent viverra felis sed leo tincidunt gravida?",
   ];
 
   return (
@@ -37,6 +39,19 @@ const MainPage = () => {
           ))}
         </Box>
       </Box>
+      <Fab
+        background-color="#060c40"
+        aria-label="add"
+        sx={{
+          position: "fixed",
+          bottom: 16,
+          right: 16,
+          backgroundColor: "#060c40",
+          color: "#fff"
+        }}
+      >
+        <AddIcon />
+      </Fab>
     </>
   );
 };

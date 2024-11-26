@@ -58,7 +58,7 @@ const SidebarMenu = () => {
         <ListItemIcon>
           <QuestionMarkOutlinedIcon />
         </ListItemIcon>
-        <ListItemText primary="Questions" />
+        <ListItemText primary="Categories" />
         {open ? <ExpandLess /> : <ExpandMore />}
       </ListItemButton>
       <Collapse in={open} timeout="auto" unmountOnExit>
