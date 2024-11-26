@@ -1,14 +1,50 @@
-import React, { useState } from 'react';
+import { Link } from '@mui/material';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
-import { Link } from '@mui/material';
+import Typography from '@mui/material/Typography';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { postUser } from '../api/userApi';
+
 
 export default function Registration() {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const navigate = useNavigate();
+
+  const handleRegister = async () => {
+    console.log("hi");
+    if (!username || !password || !confirmPassword) {
+      setError('All fields are required.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    try {
+      const formData = { username, password };
+      await postUser(formData); 
+      setSuccess('Registration successful!');
+      setError('');
+      navigate('/login');
+    } catch (err) {
+      console.error(err);
+      setError('Registration failed. Please try again.');
+      setSuccess('');
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -46,6 +82,7 @@ export default function Registration() {
             label="Username"
             variant="outlined"
             fullWidth
+            onChange={(e) => setUsername(e.target.value)}
             sx={{
               marginBottom: 2,
               borderRadius: 2
@@ -57,6 +94,7 @@ export default function Registration() {
             type="password"
             variant="outlined"
             fullWidth
+            onChange={(e) => setPassword(e.target.value)}
             sx={{
               marginBottom: 2,
               borderRadius: 2
@@ -68,6 +106,7 @@ export default function Registration() {
             type="password"
             variant="outlined"
             fullWidth
+            onChange={(e) => setConfirmPassword(e.target.value)}
             sx={{
               marginBottom: 3,
               borderRadius: 2
@@ -80,6 +119,7 @@ export default function Registration() {
             variant="contained"
             color="success"
             fullWidth
+            onClick={handleRegister}
             sx={{
               padding: 1.5,
               fontWeight: 'bold',
@@ -100,7 +140,7 @@ export default function Registration() {
               Already a member? 
             </Typography>
             <Link 
-              href="#/login"
+              href="/login"
               sx={{
                 fontSize: '0.9rem',
                 color: '#060c40',
