@@ -2,7 +2,7 @@ import axios from 'axios';
 import { Category } from '../types/CategoryTypes';
 
 const categoryApi = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: 'http://localhost:3000',
   headers: {
     Accept: 'application/json',
   },

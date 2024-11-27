@@ -1,51 +1,71 @@
-import React, { useState, useEffect } from "react";
-import Box from "@mui/material/Box";
-import AppBarComponent from "./AppBarComponent";
-import SidebarMenu from "./SideBarMenu";
-import QuestionCard from "./QuestionCard";
-import Fab from "@mui/material/Fab";
 import AddIcon from "@mui/icons-material/Add";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
-import Select from "@mui/material/Select";
+import Fab from "@mui/material/Fab";
 import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import TextField from "@mui/material/TextField";
+import Cookies from 'js-cookie';
+import React, { useEffect, useState } from "react";
+import { webSocket } from 'rxjs/webSocket';
 import { getAllCategories } from "../../api/categoryApi";
+import AppBarComponent from "./AppBarComponent";
+import QuestionCard from "./QuestionCard";
+import SidebarMenu from "./SideBarMenu";
+
+const subject = webSocket({
+  url: 'ws://localhost:8081/',  
+  openObserver: {
+    next: () => console.log('WebSocket connection established'),
+  },
+  closeObserver: {
+    next: () => console.log('WebSocket connection closed'),
+  },
+});
 
 const MainPage = () => {
-  const [questions, setQuestions] = useState([
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit?",
-    "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua?",
-    "Aliquam sit amet ipsum euismod lacinia?",
-    "Vestibulum euismod nisl eu eros vehicula, at condimentum mi tincidunt?",
-    "Etiam gravida libero ac elit tristique, et dictum arcu euismod?",
-    "Praesent viverra felis sed leo tincidunt gravida?",
-  ]);
+  const id = Cookies.get('userId');
+  const userId = id ? Number(id) : null;
 
-  const [categories, setCategories] = useState([
-    { id: 1, name: "elso kat" },
-    { id: 2, name: "masodik kat" },
-    { id: 3, name: "harmadik kat" },
-  ]);
-  const [selectedCategory, setSelectedCategory] = useState("");
-
+  const [questions, setQuestions] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(1);
   const [open, setOpen] = useState(false);
   const [newQuestion, setNewQuestion] = useState("");
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const fetchedCategories = await getAllCategories();
-        setCategories(fetchedCategories);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      }
-    };
 
+  const fetchCategories = async () => {
+    try {
+      const categories = await getAllCategories(); 
+      console.log(categories);
+      setCategories(categories);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      setCategories([]); 
+    }
+  };
+  
+  useEffect(() => {
     fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    const subscription = subject.subscribe({
+      next: msg => {
+        console.log('Received message:', msg);
+        setQuestions(prevQuestions => [...prevQuestions, msg]);
+      },
+      error: err => console.error('WebSocket Error:', err),
+      complete: () => console.log('WebSocket connection closed'),
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleOpen = () => setOpen(true);
@@ -56,7 +76,10 @@ const MainPage = () => {
 
   const handleAddQuestion = () => {
     if (newQuestion.trim() && selectedCategory) {
-      setQuestions([...questions, `${newQuestion} (Category: ${selectedCategory})`]);
+      const question = { text: newQuestion, category: selectedCategory, userId: userId };
+      console.log(question)
+      subject.next(question);
+
       handleClose();
     }
   };
@@ -80,7 +103,7 @@ const MainPage = () => {
           }}
         >
           {questions.map((question, index) => (
-            <QuestionCard key={index} question={question} />
+            <QuestionCard key={index} question={question.question.text} />
           ))}
         </Box>
       </Box>
@@ -126,7 +149,7 @@ const MainPage = () => {
               Select a category
             </MenuItem>
             {categories.map((category) => (
-              <MenuItem key={category.id} value={category.name}>
+              <MenuItem key={category.id} value={category.id}>
                 {category.name}
               </MenuItem>
             ))}
