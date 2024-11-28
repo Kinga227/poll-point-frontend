@@ -1,12 +1,19 @@
-import React from "react";
+import Button from "@mui/material/Button";
+import ButtonGroup from "@mui/material/ButtonGroup";
 import Card from "@mui/material/Card";
 import CardActions from "@mui/material/CardActions";
 import CardContent from "@mui/material/CardContent";
-import ButtonGroup from "@mui/material/ButtonGroup";
-import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
+import React, { useEffect, useState } from "react";
 
 const QuestionCard = ({ question, onAnswer }) => {
+
+  const [agree, setAgree] = useState(0)
+  const [disagree, setDisagree] = useState(0)
+  useEffect(() => {
+    setAgree(question.trueCount);
+    setDisagree(question.falseCount);
+  }, [question]);
 
   return (
     <Card
@@ -23,10 +30,10 @@ const QuestionCard = ({ question, onAnswer }) => {
         
         <Typography sx={{ color: 'text.secondary', mt: 2 }}>
           <span style={{ fontWeight: 'bold', color: '#005c09' }}>
-            {question.trueCount ?? 0} agrees
+            {agree ?? 0} agrees
           </span>{" "}
           <span style={{ fontWeight: 'bold', color: '#5c0003' }}>
-            {question.falseCount ?? 0} disagrees
+            {disagree ?? 0} disagrees
           </span>
         </Typography>
       </CardContent>
