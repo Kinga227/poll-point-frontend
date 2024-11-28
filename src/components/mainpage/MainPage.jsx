@@ -37,7 +37,6 @@ const MainPage = () => {
   const [open, setOpen] = useState(false);
   const [newQuestion, setNewQuestion] = useState("");
 
-
   const fetchCategories = async () => {
     try {
       const categories = await getAllCategories(); 
@@ -55,18 +54,37 @@ const MainPage = () => {
 
   useEffect(() => {
     const subscription = subject.subscribe({
-      next: msg => {
+      next: (msg) => {
         console.log('Received message:', msg);
-        setQuestions(prevQuestions => [...prevQuestions, msg]);
+        
+        if (msg.type === "question") {
+          setQuestions((prevQuestions) => [
+            ...prevQuestions, 
+            { 
+              id: msg.question.id,
+              text: msg.question.text,
+              trueCount: msg.trueCount,
+              falseCount: msg.falseCount 
+            }
+          ]);
+        } else if (msg.type === "answer") {
+          setQuestions((prevQuestions) => 
+            prevQuestions.map((question) =>
+              question.id === msg.questionId
+                ? { ...question, trueCount: msg.trueCount, falseCount: msg.falseCount }
+                : question
+            )
+          );
+        }
       },
-      error: err => console.error('WebSocket Error:', err),
+      error: (err) => console.error('WebSocket Error:', err),
       complete: () => console.log('WebSocket connection closed'),
     });
-
+  
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, []);  
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => {
@@ -76,11 +94,30 @@ const MainPage = () => {
 
   const handleAddQuestion = () => {
     if (newQuestion.trim() && selectedCategory) {
-      const question = { text: newQuestion, category: selectedCategory, userId: userId };
-      console.log(question)
-      subject.next(question);
-
+      const question = {
+        type: "message",
+        text: newQuestion, 
+        category: selectedCategory,
+        userId: userId
+      };
+  
+      console.log(question);
+  
+      subject.next(question); 
+  
       handleClose();
+    }
+  };  
+
+  const handleAnswer = (questionId, answer) => {
+    if (userId) {
+      const answerData = {
+        type: "answer",
+        questionId,
+        userId,
+        answer,
+      };
+      subject.next(answerData);
     }
   };
 
@@ -103,7 +140,7 @@ const MainPage = () => {
           }}
         >
           {questions.map((question, index) => (
-            <QuestionCard key={index} question={question.question.text} />
+            <QuestionCard key={index} question={question} onAnswer={handleAnswer} />
           ))}
         </Box>
       </Box>
