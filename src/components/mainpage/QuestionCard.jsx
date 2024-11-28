@@ -5,15 +5,57 @@ import CardActions from "@mui/material/CardActions";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import React, { useEffect, useState } from "react";
+import { Subject } from "rxjs";
+import { filter } from "rxjs/operators";
+import { getMyAnswer } from "../../api/answerApi";
 
-const QuestionCard = ({ question, onAnswer }) => {
+const voteSubject = new Subject();
+
+const QuestionCard = ({ question, onAnswer, userId }) => {
 
   const [agree, setAgree] = useState(0)
   const [disagree, setDisagree] = useState(0)
+  const [myAnswer, setMyAnswer] = useState([])
+
   useEffect(() => {
     setAgree(question.trueCount);
     setDisagree(question.falseCount);
-  }, [question]);
+
+    const fetchMyAnswer = async () => {
+      setAgree(question.trueCount);
+      setDisagree(question.falseCount);
+      try {
+        const my = await getMyAnswer({ userId: userId, questionId: question.id });
+        setMyAnswer(my);
+        console.log(my);
+      } catch (error) {
+        console.error("Failed to fetch my answer:", error);
+      }
+    };
+
+    fetchMyAnswer();
+
+  }, [question, userId]);
+
+  useEffect(() => {
+    const subscription = voteSubject
+      .pipe(
+        filter(({ id }) => id === question.id),
+        filter(({ hasVoted }) => !hasVoted) 
+      )
+      .subscribe(({ id, answer }) => {
+        onAnswer(id, answer);
+      });
+
+    return () => subscription.unsubscribe();
+  }, [onAnswer, userId, question.id]);
+
+  const hasVoted = myAnswer.length > 0;
+  const votedAnswer = hasVoted ? myAnswer[0].answer : null;
+
+  const handleVote = (answer) => {
+    voteSubject.next({ id: question.id, answer, hasVoted });
+  };
 
   return (
     <Card
@@ -42,15 +84,15 @@ const QuestionCard = ({ question, onAnswer }) => {
       <ButtonGroup variant="contained" fullWidth aria-label="Basic button group">
           <Button
             fullWidth
-            sx={{ height: 56, bgcolor: "#005c09", fontWeight: "bold" }}
-            onClick={() => onAnswer(question.id, true)}
+            sx={{ height: 56, bgcolor: hasVoted && votedAnswer === 1 ? "#5c0003" : "#757876", fontWeight: "bold" }}
+            onClick={() => handleVote(true)}
           >
             Agree
           </Button>
           <Button
             fullWidth
-            sx={{ height: 56, bgcolor: "#5c0003", fontWeight: "bold" }}
-            onClick={() => onAnswer(question.id, false)}
+            sx={{ height: 56, bgcolor: hasVoted && votedAnswer === 0 ? "#5c0003" : "#757876", fontWeight: "bold" }}
+            onClick={() => handleVote(false)}
           >
             Disagree
           </Button>

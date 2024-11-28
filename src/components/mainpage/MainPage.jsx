@@ -162,11 +162,13 @@ const MainPage = () => {
             bgcolor: "background.default",
           }}
         >
+
           {displayedQuestions.map((question, index) => (
             <QuestionCard
               key={index}
               question={question}
               onAnswer={handleAnswer}
+              userId={userId}
             />
           ))}
         </Box>
