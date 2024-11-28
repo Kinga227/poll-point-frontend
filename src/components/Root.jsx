@@ -9,6 +9,7 @@ export default function Root() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Login />} />
         <Route path="/registration" element={<Registration />} />
         <Route path="/questions" element={<MainPage />} />
       </Routes>

@@ -140,7 +140,7 @@ const MainPage = () => {
           }}
         >
           {questions.map((question, index) => (
-            <QuestionCard key={index} question={question} onAnswer={handleAnswer} />
+            <QuestionCard key={index} question={question} onAnswer={handleAnswer} userId={userId}/>
           ))}
         </Box>
       </Box>

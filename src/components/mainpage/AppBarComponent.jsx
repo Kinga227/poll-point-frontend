@@ -1,13 +1,28 @@
-import React from "react";
+import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
-import Toolbar from "@mui/material/Toolbar";
-import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
-import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
+import Toolbar from "@mui/material/Toolbar";
+import Typography from "@mui/material/Typography";
+import Cookies from "js-cookie";
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { logoutUser } from '../../api/userApi';
 
 const AppBarComponent = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser(); 
+      Cookies.remove("userId");
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="fixed" sx={{ backgroundColor: "#060c40" }}>
@@ -26,7 +41,7 @@ const AppBarComponent = () => {
             PollPoint
           </Typography>
           <LogoutOutlinedIcon />
-          <Button color="inherit">Logout</Button>
+          <Button color="inherit" onClick={handleLogout}>Logout</Button>
         </Toolbar>
       </AppBar>
     </Box>
