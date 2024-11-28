@@ -11,10 +11,10 @@ import ListItemText from "@mui/material/ListItemText";
 import React, { useEffect, useState } from "react";
 import { getAllCategories } from "../../api/categoryApi";
 
-const SidebarMenu = () => {
+const SidebarMenu = ({ onFilterChange }) => {
   const [open, setOpen] = useState(true);
-
   const [categories, setCategories] = useState([]);
+  const [filterToggle, setFilterToggle] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -33,6 +33,12 @@ const SidebarMenu = () => {
     setOpen(!open);
   };
 
+  const handleToggleFilter = () => {
+    const newFilter = !filterToggle ? "myQuestions" : "all";
+    onFilterChange(newFilter);
+    setFilterToggle(!filterToggle);
+  };
+
   return (
     <List
       sx={{
@@ -48,12 +54,13 @@ const SidebarMenu = () => {
       }}
       component="nav"
     >
-      <ListItemButton>
+      <ListItemButton onClick={handleToggleFilter}>
         <ListItemIcon>
           <PersonSearchOutlinedIcon />
         </ListItemIcon>
-        <ListItemText primary="My questions" />
+        <ListItemText primary={filterToggle ? "All questions" : "My questions"} />
       </ListItemButton>
+
       <ListItemButton onClick={handleClick}>
         <ListItemIcon>
           <QuestionMarkOutlinedIcon />
@@ -61,14 +68,19 @@ const SidebarMenu = () => {
         <ListItemText primary="Categories" />
         {open ? <ExpandLess /> : <ExpandMore />}
       </ListItemButton>
+     
       <Collapse in={open} timeout="auto" unmountOnExit>
-      <List component="div" disablePadding>
+        <List component="div" disablePadding>
           {categories.map((category, index) => (
-            <ListItemButton sx={{ pl: 4 }} key={index}>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              key={index}
+              onClick={() => onFilterChange('category-' + category.id)}
+            >
               <ListItemIcon>
                 <CategoryOutlinedIcon />
               </ListItemIcon>
-              <ListItemText primary={category.name} /> {/* Adjust property based on your API response */}
+              <ListItemText primary={category.name} />
             </ListItemButton>
           ))}
         </List>

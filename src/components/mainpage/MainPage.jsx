@@ -9,26 +9,26 @@ import Fab from "@mui/material/Fab";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import TextField from "@mui/material/TextField";
-import Cookies from 'js-cookie';
-import React, { useEffect, useState } from "react";
-import { webSocket } from 'rxjs/webSocket';
+import Cookies from "js-cookie";
+import React, { useEffect, useState, useMemo } from "react";
+import { webSocket } from "rxjs/webSocket";
 import { getAllCategories } from "../../api/categoryApi";
 import AppBarComponent from "./AppBarComponent";
 import QuestionCard from "./QuestionCard";
 import SidebarMenu from "./SideBarMenu";
 
 const subject = webSocket({
-  url: 'ws://localhost:8081/',  
+  url: "ws://localhost:8081/",
   openObserver: {
-    next: () => console.log('WebSocket connection established'),
+    next: () => console.log("WebSocket connection established"),
   },
   closeObserver: {
-    next: () => console.log('WebSocket connection closed'),
+    next: () => console.log("WebSocket connection closed"),
   },
 });
 
 const MainPage = () => {
-  const id = Cookies.get('userId');
+  const id = Cookies.get("userId");
   const userId = id ? Number(id) : null;
 
   const [questions, setQuestions] = useState([]);
@@ -36,18 +36,35 @@ const MainPage = () => {
   const [selectedCategory, setSelectedCategory] = useState(1);
   const [open, setOpen] = useState(false);
   const [newQuestion, setNewQuestion] = useState("");
+  const [filter, setFilter] = useState("all");
+
+  const displayedQuestions = useMemo(() => {
+    if (filter === "myQuestions") {
+      return questions.filter((q) => q.userId === userId);
+    } else if (filter === "all") {
+      return questions;
+    } else if (filter.startsWith("category-")) {
+      const categoryId = parseInt(filter.split("-")[1], 10);
+      return questions.filter((q) => q.catId === categoryId);
+    }
+    return questions;
+  }, [filter, questions, userId]);
+
+  const handleFilterChange = (FilterType) => {
+    setFilter(FilterType);
+  };
 
   const fetchCategories = async () => {
     try {
-      const categories = await getAllCategories(); 
+      const categories = await getAllCategories();
       console.log(categories);
       setCategories(categories);
     } catch (error) {
       console.error("Error fetching categories:", error);
-      setCategories([]); 
+      setCategories([]);
     }
   };
-  
+
   useEffect(() => {
     fetchCategories();
   }, []);
@@ -55,36 +72,42 @@ const MainPage = () => {
   useEffect(() => {
     const subscription = subject.subscribe({
       next: (msg) => {
-        console.log('Received message:', msg);
-        
+        console.log("Received message:", msg);
+
         if (msg.type === "question") {
           setQuestions((prevQuestions) => [
-            ...prevQuestions, 
-            { 
+            ...prevQuestions,
+            {
               id: msg.question.id,
               text: msg.question.text,
+              userId: msg.question.userId,
+              catId: msg.question.catId,
               trueCount: msg.trueCount,
-              falseCount: msg.falseCount 
-            }
+              falseCount: msg.falseCount,
+            },
           ]);
         } else if (msg.type === "answer") {
-          setQuestions((prevQuestions) => 
+          setQuestions((prevQuestions) =>
             prevQuestions.map((question) =>
               question.id === msg.questionId
-                ? { ...question, trueCount: msg.trueCount, falseCount: msg.falseCount }
+                ? {
+                    ...question,
+                    trueCount: msg.trueCount,
+                    falseCount: msg.falseCount,
+                  }
                 : question
             )
           );
         }
       },
-      error: (err) => console.error('WebSocket Error:', err),
-      complete: () => console.log('WebSocket connection closed'),
+      error: (err) => console.error("WebSocket Error:", err),
+      complete: () => console.log("WebSocket connection closed"),
     });
-  
+
     return () => {
       subscription.unsubscribe();
     };
-  }, []);  
+  }, []);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => {
@@ -96,18 +119,18 @@ const MainPage = () => {
     if (newQuestion.trim() && selectedCategory) {
       const question = {
         type: "message",
-        text: newQuestion, 
+        text: newQuestion,
         category: selectedCategory,
-        userId: userId
+        userId: userId,
       };
-  
+
       console.log(question);
-  
-      subject.next(question); 
-  
+
+      subject.next(question);
+
       handleClose();
     }
-  };  
+  };
 
   const handleAnswer = (questionId, answer) => {
     if (userId) {
@@ -125,7 +148,7 @@ const MainPage = () => {
     <>
       <AppBarComponent />
       <Box sx={{ display: "flex", flexDirection: "row" }}>
-        <SidebarMenu />
+        <SidebarMenu onFilterChange={handleFilterChange} />
         <Box
           sx={{
             marginLeft: "380px",
@@ -139,8 +162,12 @@ const MainPage = () => {
             bgcolor: "background.default",
           }}
         >
-          {questions.map((question, index) => (
-            <QuestionCard key={index} question={question} onAnswer={handleAnswer} />
+          {displayedQuestions.map((question, index) => (
+            <QuestionCard
+              key={index}
+              question={question}
+              onAnswer={handleAnswer}
+            />
           ))}
         </Box>
       </Box>
